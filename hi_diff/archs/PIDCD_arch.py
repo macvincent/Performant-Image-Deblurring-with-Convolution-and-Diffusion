@@ -107,7 +107,7 @@ class HIM(nn.Module):
     def forward(self, x, prior):
         B, C, H, W = x.shape
         x = rearrange(x, 'b c h w -> b (h w) c')
-        prior = rearrange(prior, 'b c w -> b w c')
+        # prior = rearrange(prior, 'b c w -> b w c')
         _x = self.norm1(x)
         prior = self.norm2(prior)
         
