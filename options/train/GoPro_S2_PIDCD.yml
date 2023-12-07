@@ -57,7 +57,7 @@ network_le:
   type: latent_encoder_gelu
   in_chans: 6
   embed_dim: 64 # same as above
-  block_num: 6
+  block_num: 3
   group: 4 # same as above
   stage: 1
   patch_expansion: 0.5
