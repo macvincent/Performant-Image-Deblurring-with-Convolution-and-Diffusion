@@ -111,8 +111,8 @@ class HI_Diff_S1(BaseModel):
         self.optimizer_total.zero_grad()
 
         prior = self.net_le(self.lq, self.gt)
-        print(prior)
         self.output = self.net_g(self.lq, prior)
+        print(self.output.max(), self.gt.max())
 
         l_total = 0
         loss_dict = OrderedDict()
