@@ -236,7 +236,7 @@ class NAFBlock(nn.Module):
 class PIDCD(nn.Module):
     def __init__(self, 
         img_channel=3, width=16, middle_blk_num=1, enc_blk_nums=[], dec_blk_nums=[],
-        LayerNorm_type = 'WithBias', embed_dim = 4, num_heads=1, bias=False
+        LayerNorm_type = 'WithBias', embed_dim = 64, num_heads=1, bias=False
     ):
         super(PIDCD, self).__init__()
         self.intro = nn.Conv2d(in_channels=img_channel, out_channels=width, kernel_size=3, padding=1, stride=1, groups=1,
