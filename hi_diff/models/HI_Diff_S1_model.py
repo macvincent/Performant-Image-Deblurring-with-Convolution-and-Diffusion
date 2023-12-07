@@ -112,7 +112,8 @@ class HI_Diff_S1(BaseModel):
 
         prior = self.net_le(self.lq, self.gt)
         self.output = self.net_g(self.lq, prior)
-        print(self.output.max(), self.gt.max())
+        print(self.lq.max(), self.output.max(), self.gt.max())
+        print(self.lq.min(), self.output.min(), self.gt.min())
 
         l_total = 0
         loss_dict = OrderedDict()
