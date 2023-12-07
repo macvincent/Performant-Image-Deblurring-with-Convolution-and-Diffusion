@@ -229,6 +229,7 @@ class HI_Diff_S1(BaseModel):
 
         if with_metrics:
             for metric in self.metric_results.keys():
+                print(f'=> {self.metric_results[metric]}')
                 self.metric_results[metric] /= (len(dataloader) + 1)
                 # update the best metric result
                 self._update_best_metric_result(dataset_name, metric, self.metric_results[metric], current_iter)

@@ -180,6 +180,7 @@ def train_pipeline(root_path):
             data_timer.record()
 
             current_iter += 1
+            logger.info(f'itr: {current_iter}')
             if current_iter > total_iters:
                 break
             # update learning rate
