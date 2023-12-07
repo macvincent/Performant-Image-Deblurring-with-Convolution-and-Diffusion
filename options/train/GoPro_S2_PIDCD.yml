@@ -92,11 +92,11 @@ diffusion_schedule:
 
 # path
 path:
-  pretrain_network_g: experiments/debug_train_HI_Diff_GoPro_S1/models/net_g_300000.pth
+  pretrain_network_g: experiments/train_HI_Diff_GoPro_S1/models/net_g_4000.pth
   param_key_g: params
   strict_load_g: true
 
-  pretrain_network_le: experiments/debug_train_HI_Diff_GoPro_S1/models/net_le_300000.pth
+  pretrain_network_le: experiments/train_HI_Diff_GoPro_S1/models/net_le_4000.pth
   param_key_g: params
   strict_load_le: true
 
