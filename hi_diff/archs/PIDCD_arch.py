@@ -252,6 +252,7 @@ class PIDCD(nn.Module):
         self.middle_blks_him = nn.ModuleList()
         self.ups = nn.ModuleList()
         self.downs = nn.ModuleList()
+        self.out = nn.Sigmoid()
 
         chan = width
         for num in enc_blk_nums:
@@ -320,7 +321,7 @@ class PIDCD(nn.Module):
 
         x = self.ending(x)
         x = x + inp
-
+        x = self.out(x)
         return x[:, :, :H, :W]
 
     def check_image_size(self, x):
