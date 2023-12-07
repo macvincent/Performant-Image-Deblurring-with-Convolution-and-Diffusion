@@ -24,7 +24,7 @@ datasets:
     prefetch_mode: ~
 
     ### -------------Progressive training--------------------------
-    mini_batch_sizes: [128,64,32,16,8,4]             # Batch size per gpu   
+    mini_batch_sizes: [64,32,16,8,4,2]             # Batch size per gpu   
     iters: [20000,20000,20000,20000,20000,200000]
     gt_size: 384   # Max patch size for progressive training
     gt_sizes: [128,160,192,256,320,384]  # Patch sizes for progressive training.
