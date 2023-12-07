@@ -107,6 +107,7 @@ class HIM(nn.Module):
     def forward(self, x, prior):
         B, C, H, W = x.shape
         x = rearrange(x, 'b c h w -> b (h w) c')
+        prior = rearrange(prior, 'b c w -> b w c')
         _x = self.norm1(x)
         prior = self.norm2(prior)
         
@@ -231,39 +232,32 @@ class NAFBlock(nn.Module):
 
 
 ##########################################################################
-# @ARCH_REGISTRY.register()
+@ARCH_REGISTRY.register()
 class PIDCD(nn.Module):
     def __init__(self, 
-        inp_channels=3, 
-        out_channels=3, 
-        dim = 48,
-        num_blocks = [4,6,6,8], 
-        num_refinement_blocks = 4,
-        heads = [1,2,4,8],
-        ffn_expansion_factor = 2.66,
-        bias = False,
-        LayerNorm_type = 'WithBias',   ## Other option 'BiasFree'
-        dual_pixel_task = False,        ## True for dual-pixel defocus deblurring only. Also set inp_channels=6
-        embed_dim = 48,
-        group=4,
-        middle_blk_num=1,
-        enc_blk_nums=[],
-        dec_blk_nums=[]
+        img_channel=3, width=16, middle_blk_num=1, enc_blk_nums=[], dec_blk_nums=[],
+        LayerNorm_type = 'WithBias', embed_dim = 4, num_heads=1, bias=False
     ):
         super(PIDCD, self).__init__()
-        self.intro = nn.Conv2d(in_channels=inp_channels, out_channels=out_channels, kernel_size=3, padding=1, stride=1, groups=1,
+        self.intro = nn.Conv2d(in_channels=img_channel, out_channels=width, kernel_size=3, padding=1, stride=1, groups=1,
                               bias=True)
-        self.ending = nn.Conv2d(in_channels=dim, out_channels=inp_channels, kernel_size=3, padding=1, stride=1, groups=1,
+        self.ending = nn.Conv2d(in_channels=width, out_channels=img_channel, kernel_size=3, padding=1, stride=1, groups=1,
                               bias=True)
 
         self.encoders = nn.ModuleList()
+        self.encoders_him = nn.ModuleList()
         self.decoders = nn.ModuleList()
+        self.decoders_him = nn.ModuleList()
         self.middle_blks = nn.ModuleList()
+        self.middle_blks_him = nn.ModuleList()
         self.ups = nn.ModuleList()
         self.downs = nn.ModuleList()
 
-        chan = dim
+        chan = width
         for num in enc_blk_nums:
+            self.encoders_him.append(
+                HIM(chan, num_heads, bias, embed_dim, LayerNorm_type, qk_scale=None)
+            )
             self.encoders.append(
                 nn.Sequential(
                     *[NAFBlock(chan) for _ in range(num)]
@@ -274,6 +268,7 @@ class PIDCD(nn.Module):
             )
             chan = chan * 2
 
+        self.middle_blks_him = HIM(chan, num_heads, bias, embed_dim, LayerNorm_type, qk_scale=None)
         self.middle_blks = \
             nn.Sequential(
                 *[NAFBlock(chan) for _ in range(middle_blk_num)]
@@ -287,6 +282,9 @@ class PIDCD(nn.Module):
                 )
             )
             chan = chan // 2
+            self.decoders_him.append(
+                HIM(chan, num_heads, bias, embed_dim, LayerNorm_type, qk_scale=None)
+            )
             self.decoders.append(
                 nn.Sequential(
                     *[NAFBlock(chan) for _ in range(num)]
@@ -296,12 +294,6 @@ class PIDCD(nn.Module):
         self.padder_size = 2 ** len(self.encoders)
 
     def forward(self, inp_img, prior=None):
-
-        # multi-scale prior
-        # prior_1 = prior
-        # prior_2 = self.down_1(prior_1)
-        # prior_3 = self.down_2(prior_2).flatten(1)
-
         B, C, H, W = inp_img.shape
         inp = self.check_image_size(inp_img)
 
@@ -309,16 +301,21 @@ class PIDCD(nn.Module):
 
         encs = []
 
-        for encoder, down in zip(self.encoders, self.downs):
+        for encoder, down, encoder_him in zip(self.encoders, self.downs, self.encoders_him):
+            if prior is not None:
+                x = encoder_him(x, prior)
             x = encoder(x)
             encs.append(x)
             x = down(x)
-
+        if prior is not None:
+            x = self.middle_blks_him(x, prior)
         x = self.middle_blks(x)
 
-        for decoder, up, enc_skip in zip(self.decoders, self.ups, encs[::-1]):
+        for decoder, up, enc_skip, decoder_him in zip(self.decoders, self.ups, encs[::-1], self.decoders_him):
             x = up(x)
             x = x + enc_skip
+            if prior is not None:
+                x = decoder_him(x, prior)
             x = decoder(x)
 
         x = self.ending(x)
@@ -326,13 +323,16 @@ class PIDCD(nn.Module):
 
         return x[:, :, :H, :W]
 
+    def check_image_size(self, x):
+        _, _, h, w = x.size()
+        mod_pad_h = (self.padder_size - h % self.padder_size) % self.padder_size
+        mod_pad_w = (self.padder_size - w % self.padder_size) % self.padder_size
+        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h))
+        return x
+
 if __name__ == '__main__':
     img_channel = 3
     width = 32
-
-    # enc_blks = [2, 2, 4, 8]
-    # middle_blk_num = 12
-    # dec_blks = [2, 2, 2, 2]
 
     enc_blks = [1, 1, 1, 28]
     middle_blk_num = 1
@@ -341,14 +341,8 @@ if __name__ == '__main__':
     net = PIDCD(img_channel=img_channel, width=width, middle_blk_num=middle_blk_num,
                       enc_blk_nums=enc_blks, dec_blk_nums=dec_blks)
 
-
     inp_shape = (3, 256, 256)
-
-    from ptflops import get_model_complexity_info
-
-    macs, params = get_model_complexity_info(net, inp_shape, verbose=False, print_per_layer_stat=False)
-
-    params = float(params[:-3])
-    macs = float(macs[:-4])
-
-    print(macs, params)
+    test_input = torch.rand(1, 3, 256, 256)*256
+    test_prior = torch.rand(1, 16, 256)
+    test_output = net.forward(test_input, test_prior)
+    print(test_input.shape, test_output.shape)
