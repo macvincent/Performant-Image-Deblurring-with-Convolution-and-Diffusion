@@ -19,7 +19,7 @@ datasets:
     # data loader
     use_shuffle: true
     num_worker_per_gpu: 4
-    batch_size_per_gpu: 16
+    batch_size_per_gpu: 64
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
@@ -106,7 +106,7 @@ train:
 
 # validation settings
 val:
-  val_freq: !!float 4e3
+  val_freq: !!float 1e3
   save_img: false
 
   metrics:
