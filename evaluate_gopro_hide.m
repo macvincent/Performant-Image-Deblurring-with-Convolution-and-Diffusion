@@ -7,10 +7,6 @@ close all;clear all;
 datasets = {'GoPro'};
 num_set = length(datasets);
 
-// tic
-// delete(gcp('nocreate'))
-// parpool('local',10);
-
 for idx_set = 1:num_set
     file_path = strcat('results/test_HI_Diff_GoPro/visualization/', datasets{idx_set}, '/');
     gt_path = strcat('datasets/test/', datasets{idx_set}, '/target/');
@@ -36,7 +32,3 @@ for idx_set = 1:num_set
     qm_ssim = total_ssim / img_num;
     
     fprintf('For %s dataset PSNR: %f SSIM: %f\n', datasets{idx_set}, qm_psnr, qm_ssim);
-
-// end
-// delete(gcp('nocreate'))
-// toc
