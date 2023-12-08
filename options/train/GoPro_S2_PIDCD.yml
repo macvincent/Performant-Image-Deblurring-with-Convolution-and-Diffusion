@@ -24,7 +24,7 @@ datasets:
     prefetch_mode: ~
 
     ### -------------Progressive training--------------------------
-    mini_batch_sizes: [16,10,8,4,2,2]             # Batch size per gpu   
+    mini_batch_sizes: [32,16,8,4,2,2]             # Batch size per gpu   
     iters: [20000,20000,20000,20000,20000,200000]
     gt_size: 384   # Max patch size for progressive training
     gt_sizes: [128,160,192,256,320,384]  # Patch sizes for progressive training.
@@ -57,7 +57,7 @@ network_le:
   type: latent_encoder_gelu
   in_chans: 6
   embed_dim: 64 # same as above
-  block_num: 3
+  block_num: 6
   group: 4 # same as above
   stage: 1
   patch_expansion: 0.5
@@ -146,7 +146,7 @@ train:
 
 # validation settings
 val:
-  val_freq: !!float 2000
+  val_freq: !!float 5000
   save_img: false
 
   metrics:
@@ -157,8 +157,8 @@ val:
 
 # logging settings
 logger:
-  print_freq: 100
-  save_checkpoint_freq: !!float 2000
+  print_freq: 500
+  save_checkpoint_freq: !!float 500
   use_tb_logger: true
   wandb:
     project: ~
