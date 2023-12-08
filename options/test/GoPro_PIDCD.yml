@@ -97,7 +97,7 @@ path:
   param_key_g: params
   strict_load_g: true
 
-  pretrain_network_le_dm: experiments/pretrained_models/HI_Diff_GoPro/net_le_dm_14000.pth
+  pretrain_network_le_dm: experiments/train_HI_Diff_GoPro_PIDCD_S2/models/net_le_dm_14000.pth
   param_key_g: params
   strict_load_le_dm: true
 
